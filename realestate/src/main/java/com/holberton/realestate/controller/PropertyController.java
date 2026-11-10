@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/api/properties")
@@ -28,8 +29,9 @@ public class PropertyController {
     }
 
     @GetMapping
-    public List<Property> findAll() {
-        return propertyService.findAll();
+    public List<Property> findAll(@RequestParam(name = "city", required = false) String city,
+                                  @RequestParam(name = "maxRent", required = false) Integer maxRent) {
+        return propertyService.search(city, maxRent);
     }
 
     @GetMapping("/{reference}")

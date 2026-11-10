@@ -1,55 +1,60 @@
 package com.holberton.realestate.service;
 
 import com.holberton.realestate.dto.PropertyRequest;
-import com.holberton.realestate.model.Address;
-import com.holberton.realestate.model.EnergyClass;
 import com.holberton.realestate.model.Property;
-import java.util.ArrayList;
-import java.util.Comparator;
+import com.holberton.realestate.repository.PropertyRepository;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Service
 public class PropertyService {
 
-    private final List<Property> properties = new ArrayList<>();
+    private static final Sort BY_REFERENCE = Sort.by("reference");
 
-    public PropertyService() {
-        properties.add(new Property("P-001",
-                new Address("12 Rue de la Paix", "75002", "Paris"), 25, 950, EnergyClass.D));
-        properties.add(new Property("P-002",
-                new Address("8 Chemin des Vignes", "33000", "Bordeaux"), 120, 1800, EnergyClass.B));
-        properties.add(new Property("P-003",
-                new Address("1 Place Bellecour", "69002", "Lyon"), 80, 2500, EnergyClass.C));
+    private final PropertyRepository propertyRepository;
+
+    public PropertyService(PropertyRepository propertyRepository) {
+        this.propertyRepository = propertyRepository;
     }
 
     public List<Property> findAll() {
-        return properties.stream()
-                .sorted(Comparator.comparing(Property::getReference))
-                .toList();
+        return propertyRepository.findAll(BY_REFERENCE);
+    }
+
+    /** Both parameters are optional: null means "no filter". */
+    public List<Property> search(String city, Integer maxRent) {
+        if (city != null && maxRent != null) {
+            return propertyRepository.findByAddressCityIgnoreCaseAndMonthlyRentLessThanEqual(
+                    city, maxRent, BY_REFERENCE);
+        }
+        if (city != null) {
+            return propertyRepository.findByAddressCityIgnoreCase(city, BY_REFERENCE);
+        }
+        if (maxRent != null) {
+            return propertyRepository.findByMonthlyRentLessThanEqual(maxRent, BY_REFERENCE);
+        }
+        return findAll();
     }
 
     public Optional<Property> findByReference(String reference) {
-        return properties.stream()
-                .filter(property -> property.getReference().equals(reference))
-                .findFirst();
+        return propertyRepository.findByReference(reference);
     }
 
     /** Returns an empty Optional if the reference is already used. */
     public Optional<Property> create(PropertyRequest request) {
-        if (findByReference(request.reference()).isPresent()) {
+        if (propertyRepository.existsByReference(request.reference())) {
             return Optional.empty();
         }
         Property property = new Property(request.reference(), request.address(),
                 request.surface(), request.monthlyRent(), request.energyClass());
-        properties.add(property);
-        return Optional.of(property);
+        return Optional.of(propertyRepository.save(property));
     }
 
     /** Returns an empty Optional if no property has this reference. */
     public Optional<Property> update(String reference, PropertyRequest request) {
-        Optional<Property> existing = findByReference(reference);
+        Optional<Property> existing = propertyRepository.findByReference(reference);
         if (existing.isEmpty()) {
             return Optional.empty();
         }
@@ -58,11 +63,16 @@ public class PropertyService {
         property.setSurface(request.surface());
         property.setMonthlyRent(request.monthlyRent());
         property.setEnergyClass(request.energyClass());
-        return Optional.of(property);
+        return Optional.of(propertyRepository.save(property));
     }
 
     /** Returns false if no property has this reference. */
     public boolean delete(String reference) {
-        return properties.removeIf(property -> property.getReference().equals(reference));
+        Optional<Property> existing = propertyRepository.findByReference(reference);
+        if (existing.isEmpty()) {
+            return false;
+        }
+        propertyRepository.delete(existing.get());
+        return true;
     }
 }
