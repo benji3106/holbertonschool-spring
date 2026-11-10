@@ -1,12 +1,39 @@
 package com.holberton.realestate.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "properties")
 public class Property {
 
-    private final String reference;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, unique = true)
+    private String reference;
+
+    @Embedded
     private Address address;
+
     private int surface;
+
     private int monthlyRent;
+
+    @Enumerated(EnumType.STRING)
     private EnergyClass energyClass;
+
+    protected Property() {
+        // used by Hibernate
+    }
 
     public Property(String reference, Address address, int surface, int monthlyRent,
                     EnergyClass energyClass) {
