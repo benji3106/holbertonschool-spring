@@ -1,7 +1,7 @@
 package com.holberton.realestate.controller;
 
 import com.holberton.realestate.dto.PropertyRequest;
-import com.holberton.realestate.model.Property;
+import com.holberton.realestate.dto.PropertyResponse;
 import com.holberton.realestate.service.PropertyService;
 import java.net.URI;
 import java.util.List;
@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/properties")
@@ -29,14 +29,16 @@ public class PropertyController {
     }
 
     @GetMapping
-    public List<Property> findAll(@RequestParam(name = "city", required = false) String city,
-                                  @RequestParam(name = "maxRent", required = false) Integer maxRent) {
+    public List<PropertyResponse> findAll(
+            @RequestParam(name = "city", required = false) String city,
+            @RequestParam(name = "maxRent", required = false) Integer maxRent) {
         return propertyService.search(city, maxRent);
     }
 
     @GetMapping("/{reference}")
-    public ResponseEntity<Property> findByReference(@PathVariable("reference") String reference) {
-        Optional<Property> property = propertyService.findByReference(reference);
+    public ResponseEntity<PropertyResponse> findByReference(
+            @PathVariable("reference") String reference) {
+        Optional<PropertyResponse> property = propertyService.findByReference(reference);
         if (property.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -44,19 +46,19 @@ public class PropertyController {
     }
 
     @PostMapping
-    public ResponseEntity<Property> create(@RequestBody PropertyRequest request) {
-        Optional<Property> created = propertyService.create(request);
+    public ResponseEntity<PropertyResponse> create(@RequestBody PropertyRequest request) {
+        Optional<PropertyResponse> created = propertyService.create(request);
         if (created.isEmpty()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
-        URI location = URI.create("/api/properties/" + created.get().getReference());
+        URI location = URI.create("/api/properties/" + created.get().reference());
         return ResponseEntity.created(location).body(created.get());
     }
 
     @PutMapping("/{reference}")
-    public ResponseEntity<Property> update(@PathVariable("reference") String reference,
-                                           @RequestBody PropertyRequest request) {
-        Optional<Property> updated = propertyService.update(reference, request);
+    public ResponseEntity<PropertyResponse> update(@PathVariable("reference") String reference,
+                                                   @RequestBody PropertyRequest request) {
+        Optional<PropertyResponse> updated = propertyService.update(reference, request);
         if (updated.isEmpty()) {
             return ResponseEntity.notFound().build();
         }

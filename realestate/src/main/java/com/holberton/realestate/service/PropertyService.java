@@ -1,6 +1,8 @@
 package com.holberton.realestate.service;
 
+import com.holberton.realestate.dto.PropertyMapper;
 import com.holberton.realestate.dto.PropertyRequest;
+import com.holberton.realestate.dto.PropertyResponse;
 import com.holberton.realestate.model.Property;
 import com.holberton.realestate.repository.PropertyRepository;
 import java.util.List;
@@ -19,41 +21,40 @@ public class PropertyService {
         this.propertyRepository = propertyRepository;
     }
 
-    public List<Property> findAll() {
-        return propertyRepository.findAll(BY_REFERENCE);
+    public List<PropertyResponse> findAll() {
+        return toResponses(propertyRepository.findAll(BY_REFERENCE));
     }
 
     /** Both parameters are optional: null means "no filter". */
-    public List<Property> search(String city, Integer maxRent) {
+    public List<PropertyResponse> search(String city, Integer maxRent) {
         if (city != null && maxRent != null) {
-            return propertyRepository.findByAddressCityIgnoreCaseAndMonthlyRentLessThanEqual(
-                    city, maxRent, BY_REFERENCE);
+            return toResponses(propertyRepository
+                    .findByAddressCityIgnoreCaseAndMonthlyRentLessThanEqual(city, maxRent, BY_REFERENCE));
         }
         if (city != null) {
-            return propertyRepository.findByAddressCityIgnoreCase(city, BY_REFERENCE);
+            return toResponses(propertyRepository.findByAddressCityIgnoreCase(city, BY_REFERENCE));
         }
         if (maxRent != null) {
-            return propertyRepository.findByMonthlyRentLessThanEqual(maxRent, BY_REFERENCE);
+            return toResponses(propertyRepository.findByMonthlyRentLessThanEqual(maxRent, BY_REFERENCE));
         }
         return findAll();
     }
 
-    public Optional<Property> findByReference(String reference) {
-        return propertyRepository.findByReference(reference);
+    public Optional<PropertyResponse> findByReference(String reference) {
+        return propertyRepository.findByReference(reference).map(PropertyMapper::toResponse);
     }
 
     /** Returns an empty Optional if the reference is already used. */
-    public Optional<Property> create(PropertyRequest request) {
+    public Optional<PropertyResponse> create(PropertyRequest request) {
         if (propertyRepository.existsByReference(request.reference())) {
             return Optional.empty();
         }
-        Property property = new Property(request.reference(), request.address(),
-                request.surface(), request.monthlyRent(), request.energyClass());
-        return Optional.of(propertyRepository.save(property));
+        Property saved = propertyRepository.save(PropertyMapper.toEntity(request));
+        return Optional.of(PropertyMapper.toResponse(saved));
     }
 
     /** Returns an empty Optional if no property has this reference. */
-    public Optional<Property> update(String reference, PropertyRequest request) {
+    public Optional<PropertyResponse> update(String reference, PropertyRequest request) {
         Optional<Property> existing = propertyRepository.findByReference(reference);
         if (existing.isEmpty()) {
             return Optional.empty();
@@ -63,7 +64,7 @@ public class PropertyService {
         property.setSurface(request.surface());
         property.setMonthlyRent(request.monthlyRent());
         property.setEnergyClass(request.energyClass());
-        return Optional.of(propertyRepository.save(property));
+        return Optional.of(PropertyMapper.toResponse(propertyRepository.save(property)));
     }
 
     /** Returns false if no property has this reference. */
@@ -74,5 +75,9 @@ public class PropertyService {
         }
         propertyRepository.delete(existing.get());
         return true;
+    }
+
+    private List<PropertyResponse> toResponses(List<Property> properties) {
+        return properties.stream().map(PropertyMapper::toResponse).toList();
     }
 }
