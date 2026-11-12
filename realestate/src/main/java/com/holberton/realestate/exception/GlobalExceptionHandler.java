@@ -19,7 +19,8 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler({PropertyNotFoundException.class, OwnerNotFoundException.class})
+    @ExceptionHandler({PropertyNotFoundException.class, OwnerNotFoundException.class,
+            TenantNotFoundException.class})
     public ProblemDetail handleNotFound(RuntimeException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
     }
