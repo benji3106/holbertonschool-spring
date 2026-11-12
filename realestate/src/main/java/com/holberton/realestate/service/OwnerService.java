@@ -14,8 +14,10 @@ import com.holberton.realestate.repository.PropertyRepository;
 import java.util.List;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class OwnerService {
 
     private static final Sort BY_NAME = Sort.by("name");
@@ -40,6 +42,7 @@ public class OwnerService {
         return OwnerMapper.toResponse(owner);
     }
 
+    @Transactional
     public OwnerResponse create(OwnerRequest request) {
         if (ownerRepository.existsByEmail(request.email())) {
             throw new DuplicateEmailException(request.email());
@@ -55,6 +58,7 @@ public class OwnerService {
                 .toList();
     }
 
+    @Transactional
     public void delete(Long id) {
         checkExists(id);
         if (propertyRepository.existsByOwnerId(id)) {

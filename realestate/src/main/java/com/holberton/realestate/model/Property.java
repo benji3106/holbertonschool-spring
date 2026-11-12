@@ -41,6 +41,9 @@ public class Property {
     @JoinColumn(name = "owner_id")
     private Owner owner;
 
+    @Column(nullable = false)
+    private boolean rented;
+
     protected Property() {
         // used by Hibernate
     }
@@ -52,6 +55,7 @@ public class Property {
         this.surface = surface;
         this.monthlyRent = monthlyRent;
         this.energyClass = energyClass;
+        this.rented = false;
     }
 
     public String getReference() {
@@ -96,5 +100,13 @@ public class Property {
 
     public void setOwner(Owner owner) {
         this.owner = owner;
+    }
+
+    public boolean isRented() {
+        return rented;
+    }
+
+    public void setRented(boolean rented) {
+        this.rented = rented;
     }
 }

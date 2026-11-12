@@ -83,4 +83,8 @@ public class Lease {
     public int getDeposit() {
         return monthlyRent * DEPOSIT_MONTHS;
     }
+
+    public void end() {
+        this.active = false;
+    }
 }

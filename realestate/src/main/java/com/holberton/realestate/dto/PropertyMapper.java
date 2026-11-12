@@ -16,7 +16,7 @@ public final class PropertyMapper {
         Long ownerId = owner == null ? null : owner.getId();
         return new PropertyResponse(property.getReference(), property.getAddress(),
                 property.getSurface(), property.getMonthlyRent(), property.getEnergyClass(),
-                property.getMonthlyRent() * MONTHS_PER_YEAR, ownerId);
+                property.getMonthlyRent() * MONTHS_PER_YEAR, ownerId, property.isRented());
     }
 
     public static Property toEntity(PropertyRequest request) {

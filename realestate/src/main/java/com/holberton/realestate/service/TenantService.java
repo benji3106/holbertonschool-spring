@@ -8,8 +8,10 @@ import com.holberton.realestate.exception.TenantNotFoundException;
 import com.holberton.realestate.model.Tenant;
 import com.holberton.realestate.repository.TenantRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class TenantService {
 
     private final TenantRepository tenantRepository;
@@ -24,6 +26,7 @@ public class TenantService {
         return TenantMapper.toResponse(tenant);
     }
 
+    @Transactional
     public TenantResponse create(TenantRequest request) {
         if (tenantRepository.existsByEmail(request.email())) {
             throw new DuplicateEmailException(request.email());

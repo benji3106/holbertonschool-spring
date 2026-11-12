@@ -28,7 +28,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler({DuplicateReferenceException.class, DuplicateEmailException.class,
-            OwnerHasPropertiesException.class, PropertyUnavailableException.class})
+            OwnerHasPropertiesException.class, PropertyUnavailableException.class,
+            LeaseAlreadyEndedException.class, PropertyHasLeasesException.class})
     public ProblemDetail handleConflict(RuntimeException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
     }

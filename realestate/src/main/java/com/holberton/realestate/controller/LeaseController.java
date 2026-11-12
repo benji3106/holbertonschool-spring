@@ -40,4 +40,9 @@ public class LeaseController {
         URI location = URI.create("/api/leases/" + created.id());
         return ResponseEntity.created(location).body(created);
     }
+
+    @PostMapping("/{id}/end")
+    public LeaseResponse end(@PathVariable("id") Long id) {
+        return leaseService.end(id);
+    }
 }

@@ -4,6 +4,7 @@ import com.holberton.realestate.dto.LeaseMapper;
 import com.holberton.realestate.dto.LeaseRequest;
 import com.holberton.realestate.dto.LeaseResponse;
 import com.holberton.realestate.exception.InsufficientIncomeException;
+import com.holberton.realestate.exception.LeaseAlreadyEndedException;
 import com.holberton.realestate.exception.LeaseNotFoundException;
 import com.holberton.realestate.exception.PropertyNotFoundException;
 import com.holberton.realestate.exception.PropertyUnavailableException;
@@ -17,8 +18,10 @@ import com.holberton.realestate.repository.TenantRepository;
 import java.util.List;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class LeaseService {
 
     private static final Sort BY_ID = Sort.by("id");
@@ -41,12 +44,11 @@ public class LeaseService {
     }
 
     public LeaseResponse findById(Long id) {
-        Lease lease = leaseRepository.findById(id)
-                .orElseThrow(() -> new LeaseNotFoundException(id));
-        return LeaseMapper.toResponse(lease);
+        return LeaseMapper.toResponse(findEntity(id));
     }
 
     /** Checks the rules in order: the first broken rule decides the error. */
+    @Transactional
     public LeaseResponse sign(LeaseRequest request) {
         // rule 2: the property exists
         Property property = propertyRepository.findByReference(request.propertyReference())
@@ -57,7 +59,7 @@ public class LeaseService {
                 .orElseThrow(() -> new TenantNotFoundException(request.tenantId()));
 
         // rule 4: the property is available
-        if (leaseRepository.existsByPropertyAndActiveTrue(property)) {
+        if (property.isRented()) {
             throw new PropertyUnavailableException(property.getReference());
         }
 
@@ -67,9 +69,26 @@ public class LeaseService {
             throw new InsufficientIncomeException(tenant.getMonthlyIncome(), requiredIncome);
         }
 
-        // rule 6: everything is fine
-        Lease lease = new Lease(property, tenant, request.durationMonths(),
-                property.getMonthlyRent());
-        return LeaseMapper.toResponse(leaseRepository.save(lease));
+        // rule 6: everything is fine, two rows change in the same transaction
+        Lease lease = leaseRepository.save(new Lease(property, tenant,
+                request.durationMonths(), property.getMonthlyRent()));
+        property.setRented(true);
+        return LeaseMapper.toResponse(lease);
+    }
+
+    @Transactional
+    public LeaseResponse end(Long id) {
+        Lease lease = findEntity(id);
+        if (!lease.isActive()) {
+            throw new LeaseAlreadyEndedException(id);
+        }
+        lease.end();
+        lease.getProperty().setRented(false);
+        return LeaseMapper.toResponse(lease);
+    }
+
+    private Lease findEntity(Long id) {
+        return leaseRepository.findById(id)
+                .orElseThrow(() -> new LeaseNotFoundException(id));
     }
 }
