@@ -3,9 +3,9 @@ package com.holberton.realestate.controller;
 import com.holberton.realestate.dto.PropertyRequest;
 import com.holberton.realestate.dto.PropertyResponse;
 import com.holberton.realestate.service.PropertyService;
+import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
-import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/properties")
@@ -37,40 +37,26 @@ public class PropertyController {
     }
 
     @GetMapping("/{reference}")
-    public ResponseEntity<PropertyResponse> findByReference(
-            @PathVariable("reference") String reference) {
-        Optional<PropertyResponse> property = propertyService.findByReference(reference);
-        if (property.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(property.get());
+    public PropertyResponse findByReference(@PathVariable("reference") String reference) {
+        return propertyService.findByReference(reference);
     }
 
     @PostMapping
     public ResponseEntity<PropertyResponse> create(@Valid @RequestBody PropertyRequest request) {
-        Optional<PropertyResponse> created = propertyService.create(request);
-        if (created.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
-        URI location = URI.create("/api/properties/" + created.get().reference());
-        return ResponseEntity.created(location).body(created.get());
+        PropertyResponse created = propertyService.create(request);
+        URI location = URI.create("/api/properties/" + created.reference());
+        return ResponseEntity.created(location).body(created);
     }
 
     @PutMapping("/{reference}")
-    public ResponseEntity<PropertyResponse> update(@PathVariable("reference") String reference,
-                                                   @Valid @RequestBody PropertyRequest request) {
-        Optional<PropertyResponse> updated = propertyService.update(reference, request);
-        if (updated.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(updated.get());
+    public PropertyResponse update(@PathVariable("reference") String reference,
+                                   @Valid @RequestBody PropertyRequest request) {
+        return propertyService.update(reference, request);
     }
 
     @DeleteMapping("/{reference}")
-    public ResponseEntity<Void> delete(@PathVariable("reference") String reference) {
-        if (!propertyService.delete(reference)) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.noContent().build();
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable("reference") String reference) {
+        propertyService.delete(reference);
     }
 }

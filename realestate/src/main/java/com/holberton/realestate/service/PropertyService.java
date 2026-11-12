@@ -3,10 +3,11 @@ package com.holberton.realestate.service;
 import com.holberton.realestate.dto.PropertyMapper;
 import com.holberton.realestate.dto.PropertyRequest;
 import com.holberton.realestate.dto.PropertyResponse;
+import com.holberton.realestate.exception.DuplicateReferenceException;
+import com.holberton.realestate.exception.PropertyNotFoundException;
 import com.holberton.realestate.model.Property;
 import com.holberton.realestate.repository.PropertyRepository;
 import java.util.List;
-import java.util.Optional;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -40,41 +41,34 @@ public class PropertyService {
         return findAll();
     }
 
-    public Optional<PropertyResponse> findByReference(String reference) {
-        return propertyRepository.findByReference(reference).map(PropertyMapper::toResponse);
+    public PropertyResponse findByReference(String reference) {
+        return PropertyMapper.toResponse(findEntity(reference));
     }
 
-    /** Returns an empty Optional if the reference is already used. */
-    public Optional<PropertyResponse> create(PropertyRequest request) {
+    public PropertyResponse create(PropertyRequest request) {
         if (propertyRepository.existsByReference(request.reference())) {
-            return Optional.empty();
+            throw new DuplicateReferenceException(request.reference());
         }
         Property saved = propertyRepository.save(PropertyMapper.toEntity(request));
-        return Optional.of(PropertyMapper.toResponse(saved));
+        return PropertyMapper.toResponse(saved);
     }
 
-    /** Returns an empty Optional if no property has this reference. */
-    public Optional<PropertyResponse> update(String reference, PropertyRequest request) {
-        Optional<Property> existing = propertyRepository.findByReference(reference);
-        if (existing.isEmpty()) {
-            return Optional.empty();
-        }
-        Property property = existing.get();
+    public PropertyResponse update(String reference, PropertyRequest request) {
+        Property property = findEntity(reference);
         property.setAddress(request.address());
         property.setSurface(request.surface());
         property.setMonthlyRent(request.monthlyRent());
         property.setEnergyClass(request.energyClass());
-        return Optional.of(PropertyMapper.toResponse(propertyRepository.save(property)));
+        return PropertyMapper.toResponse(propertyRepository.save(property));
     }
 
-    /** Returns false if no property has this reference. */
-    public boolean delete(String reference) {
-        Optional<Property> existing = propertyRepository.findByReference(reference);
-        if (existing.isEmpty()) {
-            return false;
-        }
-        propertyRepository.delete(existing.get());
-        return true;
+    public void delete(String reference) {
+        propertyRepository.delete(findEntity(reference));
+    }
+
+    private Property findEntity(String reference) {
+        return propertyRepository.findByReference(reference)
+                .orElseThrow(() -> new PropertyNotFoundException(reference));
     }
 
     private List<PropertyResponse> toResponses(List<Property> properties) {
