@@ -2,6 +2,7 @@ package com.holberton.realestate.exception;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -18,14 +19,21 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler(PropertyNotFoundException.class)
-    public ProblemDetail handleNotFound(PropertyNotFoundException ex) {
+    @ExceptionHandler({PropertyNotFoundException.class, OwnerNotFoundException.class})
+    public ProblemDetail handleNotFound(RuntimeException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
-    @ExceptionHandler(DuplicateReferenceException.class)
-    public ProblemDetail handleDuplicate(DuplicateReferenceException ex) {
+    @ExceptionHandler({DuplicateReferenceException.class, DuplicateEmailException.class})
+    public ProblemDetail handleDuplicate(RuntimeException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    /** Last line of defence: a constraint of the database refused the data. */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ProblemDetail handleDataIntegrity(DataIntegrityViolationException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,
+                "The data conflicts with data already stored");
     }
 
     @Override
