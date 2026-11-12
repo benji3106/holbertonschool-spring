@@ -19,16 +19,23 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
+    private static final HttpStatusCode UNPROCESSABLE_CONTENT = HttpStatusCode.valueOf(422);
+
     @ExceptionHandler({PropertyNotFoundException.class, OwnerNotFoundException.class,
-            TenantNotFoundException.class})
+            TenantNotFoundException.class, LeaseNotFoundException.class})
     public ProblemDetail handleNotFound(RuntimeException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
     @ExceptionHandler({DuplicateReferenceException.class, DuplicateEmailException.class,
-            OwnerHasPropertiesException.class})
+            OwnerHasPropertiesException.class, PropertyUnavailableException.class})
     public ProblemDetail handleConflict(RuntimeException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(InsufficientIncomeException.class)
+    public ProblemDetail handleBusinessRule(InsufficientIncomeException ex) {
+        return ProblemDetail.forStatusAndDetail(UNPROCESSABLE_CONTENT, ex.getMessage());
     }
 
     /** Last line of defence: a constraint of the database refused the data. */
