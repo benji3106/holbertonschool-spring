@@ -1,5 +1,6 @@
 package com.holberton.realestate.dto;
 
+import com.holberton.realestate.model.Owner;
 import com.holberton.realestate.model.Property;
 
 public final class PropertyMapper {
@@ -11,9 +12,11 @@ public final class PropertyMapper {
     }
 
     public static PropertyResponse toResponse(Property property) {
+        Owner owner = property.getOwner();
+        Long ownerId = owner == null ? null : owner.getId();
         return new PropertyResponse(property.getReference(), property.getAddress(),
                 property.getSurface(), property.getMonthlyRent(), property.getEnergyClass(),
-                property.getMonthlyRent() * MONTHS_PER_YEAR);
+                property.getMonthlyRent() * MONTHS_PER_YEAR, ownerId);
     }
 
     public static Property toEntity(PropertyRequest request) {

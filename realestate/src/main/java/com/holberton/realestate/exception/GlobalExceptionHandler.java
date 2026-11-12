@@ -24,8 +24,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
-    @ExceptionHandler({DuplicateReferenceException.class, DuplicateEmailException.class})
-    public ProblemDetail handleDuplicate(RuntimeException ex) {
+    @ExceptionHandler({DuplicateReferenceException.class, DuplicateEmailException.class,
+            OwnerHasPropertiesException.class})
+    public ProblemDetail handleConflict(RuntimeException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
     }
 
