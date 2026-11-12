@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/properties")
@@ -46,7 +47,7 @@ public class PropertyController {
     }
 
     @PostMapping
-    public ResponseEntity<PropertyResponse> create(@RequestBody PropertyRequest request) {
+    public ResponseEntity<PropertyResponse> create(@Valid @RequestBody PropertyRequest request) {
         Optional<PropertyResponse> created = propertyService.create(request);
         if (created.isEmpty()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
@@ -57,7 +58,7 @@ public class PropertyController {
 
     @PutMapping("/{reference}")
     public ResponseEntity<PropertyResponse> update(@PathVariable("reference") String reference,
-                                                   @RequestBody PropertyRequest request) {
+                                                   @Valid @RequestBody PropertyRequest request) {
         Optional<PropertyResponse> updated = propertyService.update(reference, request);
         if (updated.isEmpty()) {
             return ResponseEntity.notFound().build();

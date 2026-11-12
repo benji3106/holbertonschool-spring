@@ -24,11 +24,14 @@ public class Property {
     @Embedded
     private Address address;
 
+    @Column(nullable = false)
     private int surface;
 
+    @Column(nullable = false)
     private int monthlyRent;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private EnergyClass energyClass;
 
     protected Property() {
